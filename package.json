@@ -3,6 +3,14 @@
 	"displayName": "VSCode Extension Localization Helper",
 	"description": "Helps manage working with vscode-nls and vscode-nls-dev in VSCode. Provides tooltips, duplicate string or key detection, and code actions to help you localize your VSCode extension",
 	"version": "0.0.1",
+	"author": {
+		"name": "Jarrett Spiker"
+	},
+	"repository": {
+		"url": "https://github.com/JarrettSpiker/vscode-extension-localization-helper.git",
+		"type": "git"
+	},
+	"license": "MIT",
 	"engines": {
 		"vscode": "^1.41.0"
 	},
@@ -15,19 +23,13 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
-		"commands": [
-			{
-				"command": "extension.helloWorld",
-				"title": "Hello World"
-			}
-		]
+		
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
-		"pretest": "npm run compile",
-		"test": "node ./out/test/runTest.js"
+		"pretest": "npm run compile"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.1.1",
