@@ -19,8 +19,7 @@
 		"Other"
 	],
 	"activationEvents": [
-		"workspaceContains:package.json",
-		"onCommand:extension.helloWorld"
+		"workspaceContains:package.json"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
