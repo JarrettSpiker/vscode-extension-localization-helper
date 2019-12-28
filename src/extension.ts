@@ -1,4 +1,4 @@
-import {languages, ExtensionContext, TextDocument, Position, Hover, DocumentSelector, RelativePattern, workspace, WorkspaceFolder, CompletionItem, CompletionItemKind} from "vscode";
+import {languages, ExtensionContext, TextDocument, Position, Hover, DocumentSelector, RelativePattern, workspace, WorkspaceFolder, CompletionItem, CompletionItemKind, ProviderResult, Location, LocationLink} from "vscode";
 import { join } from "path";
 
 export function activate(context: ExtensionContext) {
@@ -83,6 +83,30 @@ export function activate(context: ExtensionContext) {
 				return Promise.resolve([]);
 			}
 		}, "%", "."));
+
+		context.subscriptions.push(languages.registerDefinitionProvider(packageJsonSelector, {
+			provideDefinition : async (document, position, token) : Promise<Location|Location[]|LocationLink[]|undefined> => {
+				let wordRange = document.getWordRangeAtPosition(position);
+				let word = document.getText(wordRange);
+				if(word.length > 4 && word.startsWith('"%') && word.endsWith('%"')){
+					let nlsKey = word.slice(2, word.length-2);
+					let nlsDocument = await getNlsDocumentForFolder(folder);
+					if(!nlsDocument) {
+						return undefined;
+					}
+					let keyIndex = nlsDocument.getText().indexOf('"'+nlsKey+'"');
+					if(keyIndex < 0) {
+						return undefined;
+					}
+					let nlsKeyWordRange = nlsDocument.getWordRangeAtPosition(nlsDocument.positionAt(keyIndex));
+					if(!nlsKeyWordRange) {
+						return undefined;
+					}
+					return new Location(packageNlsUri, nlsKeyWordRange);
+				}
+				return undefined;
+			}
+		}));
 	});
 }
 
