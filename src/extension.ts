@@ -1,4 +1,4 @@
-import {languages, ExtensionContext, TextDocument, Position, Hover, DocumentSelector, RelativePattern, workspace, WorkspaceFolder} from "vscode";
+import {languages, ExtensionContext, TextDocument, Position, Hover, DocumentSelector, RelativePattern, workspace, WorkspaceFolder, CompletionItem, CompletionItemKind} from "vscode";
 import { join } from "path";
 
 export function activate(context: ExtensionContext) {
@@ -10,7 +10,7 @@ export function activate(context: ExtensionContext) {
 		};
 		
 		let folderUri = folder.uri;
-		let packageNlsUri = folderUri.with({path:join(folderUri.path, "package.nls.json")})
+		let packageNlsUri = folderUri.with({path:join(folderUri.path, "package.nls.json")});
 
 		context.subscriptions.push(languages.registerHoverProvider(packageJsonSelector, {
 			provideHover : async (document: TextDocument, position: Position) => {
@@ -43,6 +43,46 @@ export function activate(context: ExtensionContext) {
 				return undefined;
 			}
 		}));
+		context.subscriptions.push(languages.registerCompletionItemProvider(packageJsonSelector, {
+			resolveCompletionItem : (item) => {
+				return item;
+			},
+
+			provideCompletionItems : async (document, position, token, context) : Promise<CompletionItem[]>=>{
+				let textLine = document.lineAt(position);
+				let wordRange = document.getWordRangeAtPosition(position);
+				let word = document.getText(wordRange);
+				let colonIndex = textLine.text.lastIndexOf(":");
+
+				// check that the word starts with "% and is a json value not a key
+				if(word.length > 1 && word.startsWith('"%') && colonIndex !== -1 && colonIndex < position.character){
+					let keyPrefix = word.slice(2);
+					if (keyPrefix.endsWith("\"")) {
+						keyPrefix = keyPrefix.slice(0, -1);
+					}
+					let nlsDocument = await getNlsDocumentForFolder(folder);
+					if(!nlsDocument) {
+						return Promise.resolve([]);
+					}
+					let nlsJson = await getDocumentContentAsJson(nlsDocument);
+					let matches : string[] = [];
+					Object.keys(nlsJson).forEach(key => {
+						if(key.startsWith(keyPrefix)){
+							matches.push(key);
+						}
+					});
+					let completionItems : CompletionItem[] = [];
+					matches.forEach(match=> {
+						let completionItem = new CompletionItem(`\"%${match}%\"`);
+						completionItem.kind = CompletionItemKind.Value;
+						completionItem.detail = nlsJson[match];
+						completionItems.push(completionItem);
+					});
+					return Promise.resolve(completionItems);
+				}
+				return Promise.resolve([]);
+			}
+		}, "%", "."));
 	});
 }
 
