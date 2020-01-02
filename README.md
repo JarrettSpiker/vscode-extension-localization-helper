@@ -1,65 +1,50 @@
-# extension-localization-helper README
+# VSCode Extension Localization Helper
 
-This is the README for your extension "extension-localization-helper". After writing up a brief description, we recommend including the following sections.
+An extension to help you work with  [vscode-nls](https://github.com/microsoft/vscode-nls) and [vscode-nls-dev](https://github.com/microsoft/vscode-nls-dev) to add localization to your own extension.
+
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+#### Show externalized string value when hovering on key
 
-For example if there is an image subfolder under your extension project workspace:
+![package json hover feature](resources/images/package-json-hover-feature.gif)
 
-\!\[feature X\]\(images/feature-x.png\)
+#### Externalized string key completion suggestions
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+![package json completion feature](resources/images/package-json-completion-feature.gif)
 
-## Requirements
+#### Peek externalized string value
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+![package json peek feature](resources/images/package-json-peek-feature.gif)
 
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
 
 -----------------------------------------------------------------------------------------------------------
 
-## Working with Markdown
+## Release Notes
 
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
+### 1.0.0
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
+Initial release, focused on linking your `package.json` to the relevant `package.nls.json` file.
 
-### For more information
+Provides hovers on `"%translated.string.keys%"` in `package.json` files to show the string value pulled from the `package.nls.json`. Provides "Go To Definition" and "Peek Definition" for the keys.
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+Provides completion suggestions when editing a `package.json` file with an associated `package.nls.json` file. When editing a json value starting with `"%` matching keys from the package.nls.json will be shown.
 
-**Enjoy!**
+
+-----------------------------------------------------------------------------------------------------------
+
+## Feature Wish List Items
+
+Features to be added in future releases:
+
+* Diagnostics for package.json files to detect:
+   * Untranslated titles and other user facing strings
+      * `"title" : "Untranslated string"`
+   * NLS keys with no match in the `package.nls.json`
+      * `"title" : "%missing.key%"` 
+* Code actions for adding missing package.nls.json, or adding untranslated strings to a package.nls.json
+* Diagnostics for package.nls.json to detect duplicate string values
+* Settings to turn of diagnostics detection
+* Integration with string externalization in source code:
+    * Detect duplicate string or key values passed to  the `vscode-nls.loadMessageBundle().localize` function.
+    * Code action for wrapping string in `localize()` call.

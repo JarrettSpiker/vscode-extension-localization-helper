@@ -4,7 +4,7 @@ import { join, dirname } from "path";
 export function activate(context: ExtensionContext) {
 
 	workspace.workspaceFolders?.forEach(folder => {
-		initializeListenersForFolder(context, folder)
+		initializeListenersForFolder(context, folder);
 	});
 	workspace.onDidChangeWorkspaceFolders((event)=>{
 		event.added.forEach(folder=>{
