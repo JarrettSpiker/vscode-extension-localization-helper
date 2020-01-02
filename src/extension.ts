@@ -1,5 +1,5 @@
-import {languages, ExtensionContext, TextDocument, Position, Hover, DocumentSelector, RelativePattern, workspace, WorkspaceFolder, CompletionItem, CompletionItemKind, ProviderResult, Location, LocationLink} from "vscode";
-import { join } from "path";
+import {languages, ExtensionContext, TextDocument, Position, Hover, DocumentSelector, RelativePattern, workspace, WorkspaceFolder, CompletionItem, CompletionItemKind, Location, LocationLink, Uri} from "vscode";
+import { join, dirname } from "path";
 
 export function activate(context: ExtensionContext) {
 
@@ -16,11 +16,11 @@ export function activate(context: ExtensionContext) {
 function initializeListenersForFolder(context:ExtensionContext, folder:WorkspaceFolder) {
 	let packageJsonSelector : DocumentSelector = {
 		scheme : "file",
-		pattern : new RelativePattern(folder , "package.json")
+		pattern : new RelativePattern(folder , "**/package.json")
 	};
 	
 	let folderUri = folder.uri;
-	let packageNlsUri = folderUri.with({path:join(folderUri.path, "package.nls.json")});
+	//let packageNlsUri = folderUri.with({path:join(folderUri.path, "package.nls.json")});
 
 	context.subscriptions.push(languages.registerHoverProvider(packageJsonSelector, {
 		provideHover : async (document: TextDocument, position: Position) => {
@@ -36,13 +36,14 @@ function initializeListenersForFolder(context:ExtensionContext, folder:Workspace
 			let word = document.getText(wordRange);
 			if(word.length > 4 && word.startsWith('"%') && word.endsWith('%"')){
 				let nlsKey = word.slice(2, word.length-2);
-				let nlsDocument = await getNlsDocumentForFolder(folder);
+				
+				let nlsDocument = await getNlsDocumentForPackage(document);
 				if(!nlsDocument) {
-					return new Hover(`No package.nls.json found at ${packageNlsUri.fsPath}`);
+					return new Hover(`No package.nls.json found at ${getRelativeNlsDocumentForPackage(document.uri).fsPath}`);
 				}
 				let nlsDocumentJson = await getDocumentContentAsJson(nlsDocument);
 				if(!nlsDocumentJson){
-					return new Hover(`Could not read the package.nls.json file at ${packageNlsUri.fsPath}`);
+					return new Hover(`Could not read the package.nls.json file at ${getRelativeNlsDocumentForPackage(document.uri).fsPath}`);
 				}
 				if(nlsDocumentJson.hasOwnProperty(nlsKey)){
 					return new Hover(nlsDocumentJson[nlsKey]);
@@ -70,7 +71,7 @@ function initializeListenersForFolder(context:ExtensionContext, folder:Workspace
 				if (keyPrefix.endsWith("\"")) {
 					keyPrefix = keyPrefix.slice(0, -1);
 				}
-				let nlsDocument = await getNlsDocumentForFolder(folder);
+				let nlsDocument = await getNlsDocumentForPackage(document);
 				if(!nlsDocument) {
 					return Promise.resolve([]);
 				}
@@ -100,7 +101,7 @@ function initializeListenersForFolder(context:ExtensionContext, folder:Workspace
 			let word = document.getText(wordRange);
 			if(word.length > 4 && word.startsWith('"%') && word.endsWith('%"')){
 				let nlsKey = word.slice(2, word.length-2);
-				let nlsDocument = await getNlsDocumentForFolder(folder);
+				let nlsDocument = await getNlsDocumentForPackage(document);
 				if(!nlsDocument) {
 					return undefined;
 				}
@@ -112,7 +113,7 @@ function initializeListenersForFolder(context:ExtensionContext, folder:Workspace
 				if(!nlsKeyWordRange) {
 					return undefined;
 				}
-				return new Location(packageNlsUri, nlsKeyWordRange);
+				return new Location(getRelativeNlsDocumentForPackage(document.uri), nlsKeyWordRange);
 			}
 			return undefined;
 		}
@@ -120,9 +121,12 @@ function initializeListenersForFolder(context:ExtensionContext, folder:Workspace
 
 }
 
-async function getNlsDocumentForFolder(folder:WorkspaceFolder) : Promise<TextDocument | undefined> {
-	let folderUri = folder.uri;
-	let packageNlsUri = folderUri.with({path:join(folderUri.path, "package.nls.json")});
+function getRelativeNlsDocumentForPackage(packageJsonPath : Uri) : Uri {
+	return packageJsonPath.with({path: join(dirname(packageJsonPath.fsPath), "package.nls.json")});
+}
+
+async function getNlsDocumentForPackage(packageJson:TextDocument) : Promise<TextDocument | undefined> {
+	let packageNlsUri = getRelativeNlsDocumentForPackage(packageJson.uri);
 	try{
 		return await workspace.openTextDocument(packageNlsUri);
 	} catch (error){
