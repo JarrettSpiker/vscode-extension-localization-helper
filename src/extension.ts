@@ -1,5 +1,5 @@
 import {languages, ExtensionContext, TextDocument, Position, Hover, DocumentSelector, RelativePattern, workspace, WorkspaceFolder, CompletionItem, CompletionItemKind, Location, LocationLink, Uri} from "vscode";
-import { join, dirname } from "path";
+// import { join, dirname } from "path";
 
 export function activate(context: ExtensionContext) {
 
@@ -122,7 +122,7 @@ function initializeListenersForFolder(context:ExtensionContext, folder:Workspace
 }
 
 function getRelativeNlsDocumentForPackage(packageJsonPath : Uri) : Uri {
-	return packageJsonPath.with({path: join(dirname(packageJsonPath.fsPath), "package.nls.json")});
+	return packageJsonPath.with({path: Uri.joinPath(packageJsonPath, "package.nls.json").fsPath});
 }
 
 async function getNlsDocumentForPackage(packageJson:TextDocument) : Promise<TextDocument | undefined> {
