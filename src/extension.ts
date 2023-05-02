@@ -13,6 +13,10 @@ export function activate(context: ExtensionContext) {
 	});
 }
 
+
+const PACKAGE_WORD_RANGE_REGEX = /"%[a-zA-Z0-9\.\-]+%"/;
+const NLS_WORD_RANGE_REGEX = /"[a-zA-Z0-9\.\-]+"/;
+
 function initializeListenersForFolder(context:ExtensionContext, folder:WorkspaceFolder) {
 	let packageJsonSelector : DocumentSelector = {
 		scheme : "file",
@@ -32,7 +36,10 @@ function initializeListenersForFolder(context:ExtensionContext, folder:Workspace
 			// "key" : "Plain text %some.key%" 
 			// "key" : "%externalization key with spaces%" 
 
-			let wordRange = document.getWordRangeAtPosition(position);
+			let wordRange = document.getWordRangeAtPosition(position, PACKAGE_WORD_RANGE_REGEX);
+			if(!wordRange) {
+				return undefined;
+			}
 			let word = document.getText(wordRange);
 			if(word.length > 4 && word.startsWith('"%') && word.endsWith('%"')){
 				let nlsKey = word.slice(2, word.length-2);
@@ -61,7 +68,10 @@ function initializeListenersForFolder(context:ExtensionContext, folder:Workspace
 
 		provideCompletionItems : async (document, position, token, context) : Promise<CompletionItem[]>=>{
 			let textLine = document.lineAt(position);
-			let wordRange = document.getWordRangeAtPosition(position);
+			let wordRange = document.getWordRangeAtPosition(position, /"%[a-zA-Z0-9\.\-]*/);
+			if(!wordRange){
+				return [];
+			}
 			let word = document.getText(wordRange);
 			let colonIndex = textLine.text.lastIndexOf(":");
 
@@ -97,7 +107,10 @@ function initializeListenersForFolder(context:ExtensionContext, folder:Workspace
 
 	context.subscriptions.push(languages.registerDefinitionProvider(packageJsonSelector, {
 		provideDefinition : async (document, position, token) : Promise<Location|Location[]|LocationLink[]|undefined> => {
-			let wordRange = document.getWordRangeAtPosition(position);
+			let wordRange = document.getWordRangeAtPosition(position, PACKAGE_WORD_RANGE_REGEX);
+			if(!wordRange) {
+				return undefined;
+			}
 			let word = document.getText(wordRange);
 			if(word.length > 4 && word.startsWith('"%') && word.endsWith('%"')){
 				let nlsKey = word.slice(2, word.length-2);
@@ -109,7 +122,7 @@ function initializeListenersForFolder(context:ExtensionContext, folder:Workspace
 				if(keyIndex < 0) {
 					return undefined;
 				}
-				let nlsKeyWordRange = nlsDocument.getWordRangeAtPosition(nlsDocument.positionAt(keyIndex));
+				let nlsKeyWordRange = nlsDocument.getWordRangeAtPosition(nlsDocument.positionAt(keyIndex), NLS_WORD_RANGE_REGEX);
 				if(!nlsKeyWordRange) {
 					return undefined;
 				}
